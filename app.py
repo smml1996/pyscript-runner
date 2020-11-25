@@ -1,6 +1,8 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask import render_template, request, redirect, url_for
 from forms import ScriptUploadForm
+from pylint import epylint
+import tempfile
 from werkzeug.utils import secure_filename
 
 import random
@@ -27,25 +29,27 @@ def get_random_string(length):
     return result_str
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def index():
     form = ScriptUploadForm()
-    if request.method == 'POST' and form.validate_on_submit():
-        file = request.files['archivo']
-        if file and allowed_file(file.filename):
-            filename = get_random_string(10) + ".py"
-            #filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            command = "python " + app.config['UPLOAD_FOLDER'] + "/" + filename
-            process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output, error = process.communicate()
-            return redirect(url_for('result', output=output, error=error))
     return render_template('index.html', form=form)
 
 
 @app.route('/result')
 def result():
     return render_template('result.html', output=request.args.get('output'), error=request.args.get('error'))
+
+
+@app.route('/lint', methods=['POST'])
+def lint_action():
+    file = tempfile.NamedTemporaryFile(delete=False, mode='w')
+    file.write(request.form['code'])
+    file.close()
+    command = "python " + file.name
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, error = process.communicate()
+    os.remove(file.name)
+    return jsonify({'output': output.decode('utf-8'), 'error': error.decode('utf-8')})
 
 
 if __name__ == '__main__':

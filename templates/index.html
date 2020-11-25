@@ -2,19 +2,82 @@
 {% from "macro.html" import render_field %}
 
 {% block content %}
+<style>
+.CodeMirror {
+font-size: 14px;
+}
 
+.btn-outline-dark:hover{
+    background-color: lightpink;
+}
+</style>
 <div class="container" style="width:100%;">
-    <h2 class="text-primary-pcep my-5">Subida de Archivo</h2>
-    <form method="post" enctype="multipart/form-data">
-        {{ form.csrf_token }}
-        {{ render_field(form.archivo, class="form-control")}}<br>
-        <div class="row" style="justify-content: center">
-            {{ form.submit(class="btn btn-primary") }} <br>
+    <div class="row" style="align-items: center">
+        <form method="post" class="col-6">
+            {{ form.csrf_token }}
+            {{ render_field(form.archivo, class="form-control")}}<br>
+            <div class="row" style="justify-content: center">
+                <button  class="btn btn-outline-dark" id="submit" name="submit" type="submit"  style="border-color: deeppink; color: deeppink">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+        </form>
+    <div class="col-6" style="background-color:black; height: 400px; overflow-y: scroll;padding-top: 2em; padding-bottom: 2em;border-color: rgb(87,209,235);border-style: groove;">
+        <div class="align-middle">
+            <h4 style="color: deeppink">Output</h4>
+            <p id="response-output" style="color:hotpink"></p>
+        <br>
+        <br>
+        <hr>
+        <h4 style="color: deeppink">Error</h4>
+        <p id="response-error" style="color:hotpink"></p>
         </div>
-    </form>
+
+    </div>
+    </div>
+
 </div>
 
 {% endblock %}
 
 {% block scripts %}
+    <script src="{{ url_for('static', filename='codemirror/mode/python/python.js') }}"></script>
+
+    <script>
+    let editor = CodeMirror.fromTextArea(document.getElementById("archivo"), {
+        lineNumbers: true,
+        mode: 'python',
+        indentWithTabs:true,
+        indentUnit: 4,
+        spellcheck: true,
+        matchBrackets: true,
+        theme: "monokai"
+    });
+
+    $( "#submit" ).click(function() {
+            var code = editor.getValue();
+            console.log(code);
+            var data = `code=${code}`;
+
+            var xhr = new XMLHttpRequest();
+            xhr.withCredentials = true;
+
+            xhr.addEventListener("readystatechange", function() {
+              if(this.readyState === 4) {
+                var answer = JSON.parse(this.responseText);
+                $('#response-output').html(answer.output.replace(/\n/g, "<br>"));
+                $('#response-error').html(answer.error.replace(/\n/g, "<br>"));
+              }
+            });
+
+            xhr.open("POST", "/lint");
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            xhr.send(data);
+        });
+    </script>
+
+    <script>
+
+    </script>
 {% endblock %}
