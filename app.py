@@ -1,9 +1,7 @@
 from flask import Flask, jsonify
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request
 from forms import ScriptUploadForm
-from pylint import epylint
 import tempfile
-from werkzeug.utils import secure_filename
 
 import random
 import string
