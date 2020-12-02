@@ -42,6 +42,7 @@ def result():
 def lint_action():
     file = tempfile.NamedTemporaryFile(delete=False, mode='w')
     file.write(request.form['code'])
+    print(request.form['code'])
     file.close()
     command = "python " + file.name
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
